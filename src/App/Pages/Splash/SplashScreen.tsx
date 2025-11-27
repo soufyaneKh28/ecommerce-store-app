@@ -1,11 +1,12 @@
 import { useColorScheme } from '@/src/hooks/use-color-scheme';
 import React from 'react';
 import {
-    ActivityIndicator,
-    Dimensions,
-    StyleSheet,
-    Text,
-    View
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -20,7 +21,12 @@ export default function SplashScreen() {
       <View style={styles.content}>
         {/* Logo */}
         <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>FASHIONISTA</Text>
+          <Image
+            source={require('../../../../assets/images/icon.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.logoText}>QUTLI</Text>
           <Text style={[styles.tagline, isDark && styles.textDark]}>
             Your Fashion Destination
           </Text>
@@ -28,7 +34,7 @@ export default function SplashScreen() {
 
         {/* Loading Indicator */}
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF6B9D" />
+          <ActivityIndicator size="large" color="#FF6139" />
           <Text style={[styles.loadingText, isDark && styles.textDark]}>
             Loading...
           </Text>
@@ -63,10 +69,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 60,
   },
+  logoImage: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
+  },
   logoText: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#FF6B9D',
+    color: '#FF6139',
     letterSpacing: 3,
     marginBottom: 10,
   },
@@ -103,7 +114,7 @@ const styles = StyleSheet.create({
   circle1: {
     width: 200,
     height: 200,
-    backgroundColor: '#FF6B9D',
+    backgroundColor: '#FF6139',
     top: 100,
     left: -50,
   },

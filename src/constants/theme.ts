@@ -5,7 +5,7 @@
 
 export const Colors = {
   // Primary Colors
-  primary: '#FF6B9D',
+  primary: '#FF6139',
   primaryLight: '#FF8FB3',
   primaryDark: '#E5557D',
   
@@ -37,8 +37,8 @@ export const Colors = {
   infoDark: '#1976D2',
   
   // Text Colors
-  textPrimary: '#1A1A1A',
-  textSecondary: '#666666',
+  textPrimary: '#1C2229',
+  textSecondary: '#97999D',
   textTertiary: '#999999',
   textDisabled: '#CCCCCC',
   textOnPrimary: '#FFFFFF',
@@ -46,7 +46,7 @@ export const Colors = {
   
   // Background Colors
   background: '#FFFFFF',
-  backgroundSecondary: '#F5F5F5',
+  backgroundSecondary: '#F5F5ED',
   backgroundTertiary: '#FAFAFA',
   
   // Surface Colors
@@ -115,7 +115,7 @@ export const Colors = {
   // Light Mode Colors (default)
   light: {
     // Primary Colors
-    primary: '#FF6B9D',
+    primary: '#FF6139',
     primaryLight: '#FF8FB3',
     primaryDark: '#E5557D',
     
@@ -125,8 +125,8 @@ export const Colors = {
     secondaryDark: '#4A7FE8',
     
     // Text Colors
-    textPrimary: '#1A1A1A',
-    textSecondary: '#666666',
+    textPrimary: '#1C2229',
+    textSecondary: '#97999D',
     textTertiary: '#999999',
     textDisabled: '#CCCCCC',
     textOnPrimary: '#FFFFFF',
@@ -134,7 +134,7 @@ export const Colors = {
     
     // Background Colors
     background: '#FFFFFF',
-    backgroundSecondary: '#F5F5F5',
+    backgroundSecondary: '#F5F5ED',
     backgroundTertiary: '#FAFAFA',
     
     // Surface Colors
@@ -154,9 +154,34 @@ export const Colors = {
   },
 } as const;
 
+/**
+ * Font Families
+ * Satoshi font family mappings
+ */
+export const Fonts = {
+  regular: 'Satoshi-Regular',
+  medium: 'Satoshi-Medium',
+  bold: 'Satoshi-Bold',
+  black: 'Satoshi-Black',
+  light: 'Satoshi-Light',
+  // Fallback to system fonts if Satoshi not loaded
+  fallback: {
+    regular: 'System',
+    medium: 'System',
+    bold: 'System',
+    black: 'System',
+    light: 'System',
+  },
+} as const;
+
 // Helper function to get colors based on theme
 export const getThemeColors = (isDark: boolean) => {
   return isDark ? Colors.dark : Colors.light;
+};
+
+// Helper function to get font family with fallback
+export const getFontFamily = (weight: 'regular' | 'medium' | 'bold' | 'black' | 'light' = 'regular') => {
+  return Fonts[weight] || Fonts.regular;
 };
 
 // Export commonly used color combinations
@@ -199,3 +224,5 @@ export const ColorScheme = {
 // Type exports
 export type ColorKey = keyof typeof Colors;
 export type ThemeMode = 'light' | 'dark';
+export type FontWeight = 'regular' | 'medium' | 'bold' | 'black' | 'light';
+

@@ -12,7 +12,7 @@ export interface CartItem {
 
 interface CartState {
   cart: CartItem[];
-  addToCart: (product: Product, size: string, color: string) => void;
+  addToCart: (product: Product, size: string, color: string, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -25,7 +25,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       cart: [],
 
-      addToCart: (product: Product, size: string, color: string) => {
+      addToCart: (product: Product, size: string, color: string, quantity: number = 1) => {
         const { cart } = get();
         const existingItemIndex = cart.findIndex(
           (item) =>
@@ -36,11 +36,11 @@ export const useCartStore = create<CartState>()(
 
         if (existingItemIndex > -1) {
           const updatedCart = [...cart];
-          updatedCart[existingItemIndex].quantity += 1;
+          updatedCart[existingItemIndex].quantity += quantity;
           set({ cart: updatedCart });
         } else {
           set({
-            cart: [...cart, { product, quantity: 1, selectedSize: size, selectedColor: color }],
+            cart: [...cart, { product, quantity, selectedSize: size, selectedColor: color }],
           });
         }
       },

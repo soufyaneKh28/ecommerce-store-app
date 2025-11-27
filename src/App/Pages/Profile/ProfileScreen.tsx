@@ -1,184 +1,146 @@
 import { IconSymbol } from '@/src/App/Components/ui/icon-symbol';
-import { useColorScheme } from '@/src/hooks/use-color-scheme';
+import { Colors, Fonts } from '@/src/constants/theme';
 import { useAuthStore } from '@/src/stores/authStore';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import {
-    Alert,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+type RootStackParamList = {
+  MainTabs: undefined;
+  MyOrders: undefined;
+  Settings: undefined;
+};
+
+interface MenuItem {
+  icon: string;
+  title: string;
+  onPress: () => void;
+}
+
 export default function ProfileScreen() {
-  const { user, logout } = useAuthStore();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { user } = useAuthStore();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handlePress = (title: string) => {
     Alert.alert(title, 'This feature will be available soon!');
   };
 
-  const MenuItem = ({
-    icon,
-    title,
-    showArrow = true,
-    onPress,
-  }: {
-    icon: string;
-    title: string;
-    showArrow?: boolean;
-    onPress: () => void;
-  }) => (
-    <TouchableOpacity
-      style={[styles.menuItem, isDark && styles.menuItemDark]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View style={styles.menuItemLeft}>
-        <View style={[styles.iconContainer, isDark && styles.iconContainerDark]}>
-          <IconSymbol name={icon} size={22} color="#FF6B9D" />
-        </View>
-        <Text style={[styles.menuItemText, isDark && styles.textDark]}>{title}</Text>
-      </View>
-      {showArrow && <IconSymbol name="chevron.right" size={20} color="#999" />}
-    </TouchableOpacity>
-  );
+  const menuItems: MenuItem[] = [
+    {
+      icon: 'shippingbox.fill',
+      title: 'My orders',
+      onPress: () => navigation.navigate('MyOrders'),
+    },
+    {
+      icon: 'bubble.left.and.bubble.right.fill',
+      title: 'Messages',
+      onPress: () => handlePress('Messages'),
+    },
+    {
+      icon: 'star.fill',
+      title: 'Reviews',
+      onPress: () => handlePress('Reviews'),
+    },
+    {
+      icon: 'location.fill',
+      title: 'Addresses',
+      onPress: () => handlePress('Addresses'),
+    },
+    {
+      icon: 'info.circle.fill',
+      title: 'About Us',
+      onPress: () => handlePress('About Us'),
+    },
+    {
+      icon: 'questionmark.circle.fill',
+      title: 'Support',
+      onPress: () => handlePress('Support'),
+    },
+    {
+      icon: 'doc.text.fill',
+      title: 'FAQ',
+      onPress: () => handlePress('FAQ'),
+    },
+    {
+      icon: 'doc.text.fill',
+      title: 'Terms of use',
+      onPress: () => handlePress('Terms of use'),
+    },
+  ];
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (user?.name) {
+      const names = user.name.split(' ');
+      if (names.length >= 2) {
+        return `${names[0][0]}${names[1][0]}`.toUpperCase();
+      }
+      return user.name.substring(0, 2).toUpperCase();
+    }
+    return 'SK';
+  };
+
+  // Get display name (first name + last initial)
+  const getDisplayName = () => {
+    if (user?.name) {
+      const names = user.name.split(' ');
+      if (names.length >= 2) {
+        return `${names[0]} ${names[1][0]}.`;
+      }
+      return user.name;
+    }
+    return 'Soufyane Kh';
+  };
 
   return (
-    <SafeAreaView style={[styles.container, isDark && styles.containerDark]} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Profile Header */}
-        <View style={[styles.profileHeader, isDark && styles.profileHeaderDark]}>
-          <View style={styles.avatarContainer}>
-            <Image
-              source={{ uri: 'https://ui-avatars.com/api/?name=Fashion+User&background=FF6B9D&color=fff&size=120' }}
-              style={styles.avatar}
-            />
-            <TouchableOpacity style={styles.editButton}>
-              <IconSymbol name="pencil" size={16} color="#fff" />
-            </TouchableOpacity>
-          </View>
-          <Text style={[styles.userName, isDark && styles.textDark]}>{user?.name || 'User'}</Text>
-          <Text style={styles.userEmail}>{user?.email || 'user@fashionista.com'}</Text>
-        </View>
-
-        {/* Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>12</Text>
-            <Text style={styles.statLabel}>Orders</Text>
-          </View>
-          <View style={[styles.statDivider, isDark && styles.statDividerDark]} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>34</Text>
-            <Text style={styles.statLabel}>Wishlist</Text>
-          </View>
-          <View style={[styles.statDivider, isDark && styles.statDividerDark]} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>5</Text>
-            <Text style={styles.statLabel}>Reviews</Text>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.avatarContainer}>
+          <View style={styles.avatar}>
+            <View style={styles.avatarSilhouette}>
+              <View style={styles.avatarHead} />
+              <View style={styles.avatarBody} />
+            </View>
           </View>
         </View>
-
-        {/* Menu Sections */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Account</Text>
-          <MenuItem
-            icon="person.crop.circle"
-            title="Edit Profile"
-            onPress={() => handlePress('Edit Profile')}
-          />
-          <MenuItem
-            icon="location.fill"
-            title="Shipping Address"
-            onPress={() => handlePress('Shipping Address')}
-          />
-          <MenuItem
-            icon="creditcard.fill"
-            title="Payment Methods"
-            onPress={() => handlePress('Payment Methods')}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>My Orders</Text>
-          <MenuItem
-            icon="shippingbox.fill"
-            title="Order History"
-            onPress={() => handlePress('Order History')}
-          />
-          <MenuItem
-            icon="arrow.circlepath"
-            title="Track Order"
-            onPress={() => handlePress('Track Order')}
-          />
-          <MenuItem
-            icon="return"
-            title="Returns & Refunds"
-            onPress={() => handlePress('Returns & Refunds')}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Preferences</Text>
-          <MenuItem
-            icon="bell.fill"
-            title="Notifications"
-            onPress={() => handlePress('Notifications')}
-          />
-          <MenuItem
-            icon="star.fill"
-            title="Wishlist"
-            onPress={() => handlePress('Wishlist')}
-          />
-          <MenuItem
-            icon="tag.fill"
-            title="Promotions"
-            onPress={() => handlePress('Promotions')}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Support</Text>
-          <MenuItem
-            icon="questionmark.circle.fill"
-            title="Help Center"
-            onPress={() => handlePress('Help Center')}
-          />
-          <MenuItem
-            icon="envelope.fill"
-            title="Contact Us"
-            onPress={() => handlePress('Contact Us')}
-          />
-          <MenuItem
-            icon="info.circle.fill"
-            title="About"
-            onPress={() => handlePress('About')}
-          />
-        </View>
-
+        <Text style={styles.userName}>{getDisplayName()}</Text>
         <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={() => 
-            Alert.alert(
-              'Logout', 
-              'Are you sure you want to logout?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Logout', style: 'destructive', onPress: logout }
-              ]
-            )
-          }
+          style={styles.settingsButton}
+          onPress={() => navigation.navigate('Settings')}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <IconSymbol name="rectangle.portrait.and.arrow.right" size={20} color="#FF3B30" />
-          <Text style={styles.logoutText}>Logout</Text>
+          <IconSymbol name="gearshape" size={24} color="#1C2229" />
         </TouchableOpacity>
+      </View>
 
-        <View style={{ height: 40 }} />
+      {/* Menu Items */}
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.menuContainer}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.menuItem}
+              onPress={item.onPress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemLeft}>
+                <IconSymbol name={item.icon as any} size={22} color={Colors.primary} />
+                <Text style={styles.menuItemText}>{item.title}</Text>
+              </View>
+              <IconSymbol name="chevron.right" size={18} color={Colors.primary} />
+            </TouchableOpacity>
+          ))}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -187,151 +149,80 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.backgroundSecondary,
   },
-  containerDark: {
-    backgroundColor: '#1a1a1a',
-  },
-  profileHeader: {
-    backgroundColor: '#fff',
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 30,
-    marginBottom: 20,
-  },
-  profileHeaderDark: {
-    backgroundColor: '#2a2a2a',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: Colors.backgroundSecondary,
   },
   avatarContainer: {
-    position: 'relative',
-    marginBottom: 15,
+    marginRight: 12,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#FF6B9D',
-  },
-  editButton: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#FF6B9D',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#fff',
+    overflow: 'hidden',
   },
-  userName: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
-  },
-  userEmail: {
-    fontSize: 14,
-    color: '#999',
-  },
-  textDark: {
-    color: '#fff',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statItem: {
-    flex: 1,
+  avatarSilhouette: {
+    width: 28,
+    height: 28,
+    justifyContent: 'flex-end',
     alignItems: 'center',
   },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FF6B9D',
-    marginBottom: 4,
+  avatarHead: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#000000',
+    marginBottom: 2,
   },
-  statLabel: {
-    fontSize: 13,
-    color: '#999',
+  avatarBody: {
+    width: 18,
+    height: 10,
+    borderRadius: 9,
+    backgroundColor: '#000000',
   },
-  statDivider: {
-    width: 1,
-    backgroundColor: '#eee',
+  userName: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#1C2229',
+    fontFamily: Fonts.medium,
   },
-  statDividerDark: {
-    backgroundColor: '#333',
+  settingsButton: {
+    padding: 4,
   },
-  section: {
-    marginBottom: 20,
+  scrollView: {
+    flex: 1,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginLeft: 20,
-    marginBottom: 10,
+  menuContainer: {
+    backgroundColor: '#FFFFFF',
+    marginTop: 8,
   },
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingVertical: 16,
     paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
-  },
-  menuItemDark: {
-    backgroundColor: '#2a2a2a',
-    borderBottomColor: '#1a1a1a',
+    borderBottomColor: '#E0E0E0',
   },
   menuItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FFF0F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  iconContainerDark: {
-    backgroundColor: '#3a2a3a',
+    gap: 16,
   },
   menuItemText: {
-    fontSize: 15,
-    color: '#333',
-    fontWeight: '500',
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FF3B30',
-    marginTop: 10,
-  },
-  logoutText: {
     fontSize: 16,
-    color: '#FF3B30',
-    fontWeight: '600',
-    marginLeft: 8,
+    color: '#1C2229',
+    fontFamily: Fonts.regular,
   },
 });
-

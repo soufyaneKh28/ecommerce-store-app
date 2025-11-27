@@ -1,135 +1,189 @@
+import { CategoriesSlider, CategoryGrid, OffersCarousel, ProductCard, ShopHeader } from '@/src/App/Components';
 import { IconSymbol } from '@/src/App/Components/ui/icon-symbol';
-import { products } from '@/src/data/products';
-import { useColorScheme } from '@/src/hooks/use-color-scheme';
+import { Colors, Fonts } from '@/src/constants/theme';
+import { categories, products } from '@/src/data/products';
+import { useShopStore } from '@/src/stores/shopStore';
 import { Product } from '@/src/types/product';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React from 'react';
 import {
-    Dimensions,
-    FlatList,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const { width } = Dimensions.get('window');
-const ITEM_WIDTH = (width - 48) / 2;
 
 type RootStackParamList = {
   MainTabs: undefined;
   ProductDetails: { productId: string };
+  TopPicks: undefined;
+  Search: undefined;
+  CategoryDetails: { categoryId: string; categoryName: string };
 };
+
+// Mock data for offers carousel
+const offers = [
+  'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800',
+  'https://images.unsplash.com/photo-1607083206968-13611e3d76db?w=800',
+  'https://images.unsplash.com/photo-1558769132-cb1aea742c7e?w=800',
+];
+
+// Mock data for category grid (BBQ Sale items)
+const categoryGridItems = [
+  { id: '1', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300', title: 'BBQ Sale' },
+  { id: '2', image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=300', title: 'BBQ Sale' },
+  { id: '3', image: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=300', title: 'BBQ Sale' },
+  { id: '4', image: 'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=300', title: 'BBQ Sale' },
+  { id: '5', image: 'https://images.unsplash.com/photo-1521223890158-f9f7c3d5d504?w=300', title: 'BBQ Sale' },
+  { id: '6', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=300', title: 'BBQ Sale' },
+  { id: '7', image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=300', title: 'BBQ Sale' },
+  { id: '8', image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=300', title: 'BBQ Sale' },
+  { id: '9', image: 'https://images.unsplash.com/photo-1521223890158-f9f7c3d5d504?w=300', title: 'BBQ Sale' },
+  { id: '10', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=300', title: 'BBQ Sale' },
+  { id: '11', image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=300', title: 'BBQ Sale' },
+  { id: '12', image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=300', title: 'BBQ Sale' },
+];
 
 export default function ShopScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const colorScheme = useColorScheme();
-  const [searchQuery, setSearchQuery] = useState('');
-  const isDark = colorScheme === 'dark';
+  
+  // Zustand store state
+  const {
+    searchQuery,
+    selectedCategory,
+    selectedTab,
+    offerIndex,
+    setSearchQuery,
+    setSelectedCategory,
+    setSelectedTab,
+    setOfferIndex,
+  } = useShopStore();
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Top picks products (best rated)
+  const topPicks = products
+    .sort((a, b) => b.rating - a.rating)
+    .slice(0, 10);
+
+  // Filter products based on selected tab
+  const getFilteredProducts = () => {
+    let filtered = products;
+
+    if (selectedTab === '5-Star Rated') {
+      filtered = filtered.filter((p) => p.rating === 5);
+    } else if (selectedTab === 'Best Selling Items') {
+      filtered = filtered.sort((a, b) => b.reviews - a.reviews);
+    } else if (selectedTab === 'New') {
+      filtered = filtered.slice().reverse();
+    }
+
+    if (searchQuery) {
+      filtered = filtered.filter((product) =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    return filtered;
+  };
+
+  const filteredProducts = getFilteredProducts();
 
   const renderProduct = ({ item }: { item: Product }) => (
-    <TouchableOpacity
-      style={styles.productCard}
-      onPress={() => navigation.navigate('ProductDetails', { productId: item.id })}
-      activeOpacity={0.8}
-    >
-      <Image source={{ uri: item.images[0] }} style={styles.productImage} />
-      {item.originalPrice && (
-        <View style={styles.discountBadge}>
-          <Text style={styles.discountText}>
-            -{Math.round((1 - item.price / item.originalPrice) * 100)}%
-          </Text>
-        </View>
-      )}
-      <View style={styles.productInfo}>
-        <Text style={[styles.productName, isDark && styles.textDark]} numberOfLines={2}>
-          {item.name}
-        </Text>
-        <View style={styles.ratingContainer}>
-          <IconSymbol name="star.fill" size={14} color="#FFB800" />
-          <Text style={[styles.ratingText, isDark && styles.textDark]}>
-            {item.rating} ({item.reviews})
-          </Text>
-        </View>
-        <View style={styles.priceContainer}>
-          <Text style={styles.price}>${item.price.toFixed(2)}</Text>
-          {item.originalPrice && (
-            <Text style={styles.originalPrice}>${item.originalPrice.toFixed(2)}</Text>
-          )}
-        </View>
-      </View>
-    </TouchableOpacity>
+    <ProductCard product={item} />
   );
 
   return (
-    <SafeAreaView style={[styles.container, isDark && styles.containerDark]} edges={['top']}>
-      {/* Header */}
-      <View style={[styles.header, isDark && styles.headerDark]}>
-        <Text style={[styles.logo, isDark && styles.textDark]}>FASHIONISTA</Text>
-        <TouchableOpacity>
-          <IconSymbol name="bell.fill" size={24} color={isDark ? '#fff' : '#333'} />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Hero Section with Offers Carousel, Header, and Categories */}
+        <View style={styles.heroSection}>
+          <OffersCarousel
+            images={offers}
+            height={350}
+            onIndexChange={setOfferIndex}
+          />
+          
+          <SafeAreaView edges={['top']}>
+            <ShopHeader
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onSearchPress={() => navigation.navigate('Search')}
+            />
+            
+            <CategoriesSlider
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onCategorySelect={setSelectedCategory}
+            />
+          </SafeAreaView>
+        </View>
 
-      {/* Search Bar */}
-      <View style={[styles.searchContainer, isDark && styles.searchContainerDark]}>
-        <IconSymbol name="magnifyingglass" size={20} color="#999" />
-        <TextInput
-          style={[styles.searchInput, isDark && styles.textDark]}
-          placeholder="Search for fashion..."
-          placeholderTextColor="#999"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
+        {/* Category Grid (2 rows) */}
+        <View style={styles.categoryGridContainer}>
+          <Text style={styles.sectionTitle}>Categories</Text>
+          <CategoryGrid 
+            items={categoryGridItems}
+            onItemPress={(item) => {
+              navigation.navigate('CategoryDetails', {
+                categoryId: item.id,
+                categoryName: item.title,
+              });
+            }}
+          />
+        </View>
 
-      {/* Banner */}
-      {!searchQuery && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.bannerContainer}
-        >
-          <View style={styles.banner}>
-            <View style={styles.bannerContent}>
-              <Text style={styles.bannerTitle}>SUMMER SALE</Text>
-              <Text style={styles.bannerSubtitle}>Up to 70% OFF</Text>
-              <TouchableOpacity style={styles.bannerButton}>
-                <Text style={styles.bannerButtonText}>Shop Now</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={[styles.banner, styles.banner2]}>
-            <View style={styles.bannerContent}>
-              <Text style={styles.bannerTitle}>NEW ARRIVALS</Text>
-              <Text style={styles.bannerSubtitle}>Fresh styles just landed</Text>
-              <TouchableOpacity style={styles.bannerButton}>
-                <Text style={styles.bannerButtonText}>Explore</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      )}
+        {/* Top Picks Section */}
+        <View style={styles.topPicksContainer}>
+          <TouchableOpacity
+            style={styles.sectionHeader}
+            onPress={() => navigation.navigate('TopPicks')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.sectionTitle}>Top picks</Text>
+            <IconSymbol name="chevron.right" size={20} color={Colors.primary} />
+          </TouchableOpacity>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.topPicksScroll}
+          >
+            {topPicks.map((product) => (
+              <ProductCard key={product.id} product={product} variant="compact" />
+            ))}
+          </ScrollView>
+        </View>
 
-      {/* Products Grid */}
-      <FlatList
-        data={filteredProducts}
-        renderItem={renderProduct}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={styles.productList}
-        columnWrapperStyle={styles.productRow}
-        showsVerticalScrollIndicator={false}
-      />
+        {/* Product Tabs */}
+        <View style={styles.tabsContainer}>
+          {['All', '5-Star Rated', 'Best Selling Items', 'New'].map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.tab, selectedTab === tab && styles.tabActive]}
+              onPress={() => setSelectedTab(tab as "All" | "5-Star Rated" | "Best Selling Items" | "New")}
+            >
+              <Text style={[styles.tabText, selectedTab === tab && styles.tabTextActive]}>
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Products Grid */}
+        <View style={styles.productsGridContainer}>
+          <FlatList
+            data={filteredProducts}
+            renderItem={renderProduct}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            scrollEnabled={false}
+            contentContainerStyle={styles.productList}
+            columnWrapperStyle={styles.productRow}
+          />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -137,166 +191,68 @@ export default function ShopScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.backgroundSecondary,
   },
-  containerDark: {
-    backgroundColor: '#1a1a1a',
+  heroSection: {
+    position: 'relative',
+    marginBottom: 200,
   },
-  header: {
+  categoryGridContainer: {
+    marginBottom: 25,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1C2229',
+    marginBottom: 15,
+    paddingHorizontal: 20,
+    fontFamily: Fonts.bold,
+  },
+  topPicksContainer: {
+    marginBottom: 25,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#fff',
+    marginBottom: 15,
   },
-  headerDark: {
-    backgroundColor: '#1a1a1a',
+  topPicksScroll: {
+    paddingHorizontal: 20,
+    gap: 12,
   },
-  logo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FF6B9D',
-    letterSpacing: 2,
-  },
-  searchContainer: {
+  tabsContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    marginHorizontal: 20,
-    marginVertical: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 25,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    gap: 20,
   },
-  searchContainerDark: {
-    backgroundColor: '#2a2a2a',
+  tab: {
+    paddingBottom: 8,
   },
-  searchInput: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 15,
-    color: '#333',
+  tabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: Colors.primary,
   },
-  textDark: {
-    color: '#fff',
-  },
-  bannerContainer: {
-    marginBottom: 15,
-  },
-  banner: {
-    width: width - 40,
-    height: 180,
-    backgroundColor: '#FF6B9D',
-    borderRadius: 15,
-    marginLeft: 20,
-    marginRight: 10,
-    padding: 25,
-    justifyContent: 'center',
-  },
-  banner2: {
-    backgroundColor: '#6B9DFF',
-  },
-  bannerContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  bannerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 5,
-  },
-  bannerSubtitle: {
-    fontSize: 16,
-    color: '#fff',
-    marginBottom: 15,
-    opacity: 0.9,
-  },
-  bannerButton: {
-    backgroundColor: '#fff',
-    paddingVertical: 10,
-    paddingHorizontal: 25,
-    borderRadius: 25,
-    alignSelf: 'flex-start',
-  },
-  bannerButtonText: {
-    color: '#FF6B9D',
-    fontWeight: 'bold',
+  tabText: {
     fontSize: 14,
+    color: '#999999',
+    fontFamily: Fonts.medium,
+  },
+  tabTextActive: {
+    color: Colors.primary,
+    fontFamily: Fonts.bold,
+  },
+  productsGridContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
   },
   productList: {
-    paddingHorizontal: 16,
     paddingBottom: 20,
   },
   productRow: {
     justifyContent: 'space-between',
-  },
-  productCard: {
-    width: ITEM_WIDTH,
     marginBottom: 20,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  productImage: {
-    width: '100%',
-    height: ITEM_WIDTH * 1.3,
-    backgroundColor: '#f5f5f5',
-  },
-  discountBadge: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  discountText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  productInfo: {
-    padding: 12,
-  },
-  productName: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 6,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  ratingText: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 4,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  price: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FF6B9D',
-    marginRight: 8,
-  },
-  originalPrice: {
-    fontSize: 13,
-    color: '#999',
-    textDecorationLine: 'line-through',
   },
 });
-

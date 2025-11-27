@@ -1,4 +1,4 @@
-# Fashionista E-Commerce Store App
+# Qutli E-Commerce Store App
 
 A beautiful Shein-style e-commerce mobile application built with Expo React Native and React Navigation.
 
@@ -21,9 +21,9 @@ For testing purposes, use these demo accounts:
 
 | Email | Password | Description |
 |-------|----------|-------------|
-| `demo@fashionista.com` | `demo123` | Main demo account |
+| `demo@qutli.com` | `demo123` | Main demo account |
 | `user@test.com` | `password` | Test user account |
-| `admin@fashionista.com` | `admin123` | Admin demo account |
+| `admin@qutli.com` | `admin123` | Admin demo account |
 
 **Quick Login**: Tap "Use Demo Account" button on login screen to auto-fill credentials.
 

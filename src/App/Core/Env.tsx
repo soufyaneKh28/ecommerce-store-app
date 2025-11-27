@@ -1,12 +1,12 @@
 // Core environment configuration
 export const ENV = {
-  API_BASE_URL: __DEV__ ? 'http://localhost:3000' : 'https://api.fashionista.com',
-  APP_NAME: 'Fashionista',
+  API_BASE_URL: __DEV__ ? 'http://localhost:3000' : 'https://api.qutli.com',
+  APP_NAME: 'Qutli',
   APP_VERSION: '1.0.0',
   DEMO_CREDENTIALS: {
-    'demo@fashionista.com': 'demo123',
+    'demo@qutli.com': 'demo123',
     'user@test.com': 'password',
-    'admin@fashionista.com': 'admin123',
+    'admin@qutli.com': 'admin123',
   },
 } as const;
 

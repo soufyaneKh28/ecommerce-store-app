@@ -1,4 +1,4 @@
-import { Colors } from '@/src/constants/theme';
+import { Colors, Fonts } from '@/src/constants/theme';
 import { useAuthStore } from '@/src/stores/authStore';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -24,7 +24,7 @@ interface OnboardingSlide {
 const slides: OnboardingSlide[] = [
   {
     id: '1',
-    title: 'Welcome to Fashionista',
+    title: 'Welcome to Qutli',
     description: 'Effortless access for your daily fashion needs.',
     image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800',
   },
@@ -53,55 +53,175 @@ export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const progressAnimations = useRef(slides.map(() => new Animated.Value(0))).current;
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Animation values for text and card
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const imageFadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Auto-advance disabled for editing - uncomment to enable
-    // startProgressAnimation();
+    // Start progress animation for auto-advance
+    startProgressAnimation();
+    
+    // Animate text and card when slide changes
+    animateContent();
+    
     return () => {
+      // Clear timer on unmount or when slide changes
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
     };
   }, [currentIndex]);
 
+  const animateContent = () => {
+    // Reset animations
+    fadeAnim.setValue(0);
+    slideAnim.setValue(-20);
+    scaleAnim.setValue(0.95);
+    imageFadeAnim.setValue(0.5);
+
+    // Animate in
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(imageFadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   const startProgressAnimation = () => {
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
     // Reset all progress bars
     progressAnimations.forEach((anim) => anim.setValue(0));
 
-    // Auto-advance disabled - uncomment to enable Instagram story feature
     // Animate current progress bar
-    // Animated.timing(progressAnimations[currentIndex], {
-    //   toValue: 1,
-    //   duration: STORY_DURATION,
-    //   useNativeDriver: false,
-    // }).start();
+    Animated.timing(progressAnimations[currentIndex], {
+      toValue: 1,
+      duration: STORY_DURATION,
+      useNativeDriver: false,
+    }).start();
 
     // Auto-advance to next slide
-    // timerRef.current = setTimeout(() => {
-    //   if (currentIndex < slides.length - 1) {
-    //     goToNext();
-    //   } else {
-    //     completeOnboarding();
-    //   }
-    // }, STORY_DURATION);
+    timerRef.current = setTimeout(() => {
+      if (currentIndex < slides.length - 1) {
+        goToNext();
+      } else {
+        completeOnboarding();
+      }
+    }, STORY_DURATION);
   };
 
   const goToNext = () => {
-    if (currentIndex < slides.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      completeOnboarding();
+    // Clear existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
     }
+
+    // Animate out before changing
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: -20,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(imageFadeAnim, {
+        toValue: 0.3,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      if (currentIndex < slides.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      } else {
+        completeOnboarding();
+      }
+    });
   };
 
   const goToPrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+    // Clear existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
     }
+
+    // Animate out before changing
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 20,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(imageFadeAnim, {
+        toValue: 0.3,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      if (currentIndex > 0) {
+        setCurrentIndex(currentIndex - 1);
+      }
+    });
   };
 
   const goToSlide = (index: number) => {
-    setCurrentIndex(index);
+    // Clear existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    // Animate out before changing
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: index > currentIndex ? -20 : 20,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(imageFadeAnim, {
+        toValue: 0.3,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setCurrentIndex(index);
+    });
   };
 
   const renderProgressBars = () => (
@@ -129,6 +249,13 @@ export default function OnboardingScreen() {
         style={styles.backgroundImage}
         resizeMode="cover"
       >
+        <Animated.View
+          style={[
+            styles.backgroundImageOverlay,
+            { opacity: imageFadeAnim },
+          ]}
+        />
+        
         {/* Progress Bars */}
         {renderProgressBars()}
 
@@ -155,9 +282,35 @@ export default function OnboardingScreen() {
         </TouchableOpacity>
 
         {/* Bottom Content Card */}
-        <View style={styles.contentCard}>
-          <Text style={styles.title}>{slides[currentIndex].title}</Text>
-          <Text style={styles.description}>{slides[currentIndex].description}</Text>
+        <Animated.View
+          style={[
+            styles.contentCard,
+            {
+              opacity: fadeAnim,
+              transform: [
+                { translateY: slideAnim },
+                { scale: scaleAnim },
+              ],
+            },
+          ]}
+        >
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            }}
+          >
+            <Text style={styles.title}>{slides[currentIndex].title}</Text>
+          </Animated.View>
+          
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            }}
+          >
+            <Text style={styles.description}>{slides[currentIndex].description}</Text>
+          </Animated.View>
 
           <TouchableOpacity
             style={styles.getStartedButton}
@@ -174,21 +327,7 @@ export default function OnboardingScreen() {
               <Text style={styles.loginLink}>Login here</Text>
             </TouchableOpacity>
           </View>
-        </View>
-
-        {/* Page Indicators */}
-        <View style={styles.pageIndicators}>
-          {slides.map((_, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.pageIndicator,
-                index === currentIndex && styles.pageIndicatorActive,
-              ]}
-              onPress={() => goToSlide(index)}
-            />
-          ))}
-        </View>
+        </Animated.View>
       </ImageBackground>
     </View>
   );
@@ -203,6 +342,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     justifyContent: 'space-between',
+  },
+  backgroundImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   progressContainer: {
     flexDirection: 'row',
@@ -226,6 +369,7 @@ const styles = StyleSheet.create({
   navButton: {
     position: 'absolute',
     top: '50%',
+    transform: [{ translateY: '-50%' }],
     width: 44,
     height: 44,
     justifyContent: 'center',
@@ -253,35 +397,44 @@ const styles = StyleSheet.create({
   },
   arrow: {
     fontSize: 24,
-    color: Colors.light.text,
+    color: Colors.primary,
     fontWeight: 'bold',
+    fontFamily: Fonts.bold,
   },
   contentCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 35,
     paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 40,
+    paddingVertical: 24,
     marginHorizontal: 16,
-    marginBottom: 16,
-    marginTop: 'auto',
+    marginBottom: 26,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 12,
-    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'regular',
+    color: Colors.textSecondary,
+    marginBottom: 8,
+    fontFamily: Fonts.regular,
   },
   description: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 24,
+    fontSize: 24,
+    fontWeight: 'bold',
+    fontFamily: Fonts.bold,
+    color: Colors.textPrimary,
+    marginBottom: 20,
+    lineHeight: 34,
   },
   getStartedButton: {
-    backgroundColor: '#FF6B9D',
+    backgroundColor: Colors.primary,
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 32,
@@ -300,11 +453,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginRight: 8,
+    fontFamily: Fonts.bold,
   },
   getStartedArrow: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: Fonts.bold,
   },
   loginSection: {
     flexDirection: 'row',
@@ -313,12 +468,14 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontSize: 14,
-    color: '#999999',
+    color: Colors.textSecondary,
+    fontFamily: Fonts.regular,
   },
   loginLink: {
     fontSize: 14,
-    color: '#FF6B9D',
+    color: Colors.primary,
     fontWeight: '600',
+    fontFamily: Fonts.medium,
   },
   pageIndicators: {
     flexDirection: 'row',

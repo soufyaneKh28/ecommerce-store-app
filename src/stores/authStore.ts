@@ -36,9 +36,9 @@ export const useAuthStore = create<AuthState>()(
 
         // Demo credentials
         const demoCredentials = {
-          'demo@fashionista.com': 'demo123',
+          'demo@qutli.com': 'demo123',
           'user@test.com': 'password',
-          'admin@fashionista.com': 'admin123',
+          'admin@qutli.com': 'admin123',
         };
 
         if (demoCredentials[email as keyof typeof demoCredentials] !== password) {

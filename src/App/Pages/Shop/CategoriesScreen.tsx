@@ -1,117 +1,225 @@
+import { ProductCard } from '@/src/App/Components/Product/ProductCard';
 import { IconSymbol } from '@/src/App/Components/ui/icon-symbol';
+import { Colors, Fonts } from '@/src/constants/theme';
 import { categories, products } from '@/src/data/products';
-import { useColorScheme } from '@/src/hooks/use-color-scheme';
-import { Category, Product } from '@/src/types/product';
+import { Product } from '@/src/types/product';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
 import {
-    Dimensions,
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
-const ITEM_WIDTH = (width - 48) / 2;
+const SIDEBAR_WIDTH = width * 0.35;
+const CONTENT_WIDTH = width - SIDEBAR_WIDTH;
+const CATEGORY_CARD_SIZE = (CONTENT_WIDTH - 48) / 3;
+const PRODUCT_CARD_WIDTH = (CONTENT_WIDTH - 48) / 2;
 
 type RootStackParamList = {
   MainTabs: undefined;
   ProductDetails: { productId: string };
+  Reviews: { productId: string };
+  CategoryDetails: { categoryId: string; categoryName: string };
+  Search: undefined;
 };
+
+// Menu items for sidebar
+const menuItems = [
+  'My Gifts',
+  '48-Hr Deal',
+  'Home & Kitchen',
+  'Electronics',
+  'Fashion',
+  'Beauty',
+  'Sports',
+  'Books',
+];
 
 export default function CategoriesScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Home & Kitchen');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredProducts = selectedCategory
-    ? products.filter((p) => p.category === selectedCategory)
-    : [];
+  // Get trending products (first 6 products)
+  const trendingProducts = products.slice(0, 6);
 
-  const renderCategory = ({ item }: { item: Category }) => (
-    <TouchableOpacity
-      style={styles.categoryCard}
-      onPress={() => setSelectedCategory(item.name)}
-      activeOpacity={0.8}
-    >
-      <Image source={{ uri: item.image }} style={styles.categoryImage} />
-      <View style={styles.categoryOverlay}>
-        <Text style={styles.categoryName}>{item.name}</Text>
+  // Filter categories based on selected category (for demo, showing all categories)
+  const filteredCategories = categories;
+
+  const handleSearchPress = () => {
+    navigation.navigate('Search');
+  };
+
+  const renderStars = (rating: number, size: number = 12) => {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+    return (
+      <View style={styles.starsContainer}>
+        {[...Array(fullStars)].map((_, i) => (
+          <IconSymbol key={`full-${i}`} name="star.fill" size={size} color={Colors.error} />
+        ))}
+        {hasHalfStar && (
+          <IconSymbol name="star.lefthalf.fill" size={size} color={Colors.error} />
+        )}
+        {[...Array(emptyStars)].map((_, i) => (
+          <IconSymbol key={`empty-${i}`} name="star" size={size} color="#CCCCCC" />
+        ))}
       </View>
-    </TouchableOpacity>
-  );
+    );
+  };
 
-  const renderProduct = ({ item }: { item: Product }) => (
+  const renderCategoryCard = ({ item, index }: { item: any; index: number }) => {
+    if (index === 0) {
+      // "View All" card
+      return (
+        <TouchableOpacity style={styles.viewAllCard} activeOpacity={0.7}>
+          <View style={styles.viewAllIconContainer}>
+            <View style={styles.gridIconContainer}>
+              <View style={styles.gridRow}>
+                <View style={styles.gridSquare} />
+                <View style={styles.gridSquare} />
+                <View style={styles.gridSquare} />
+              </View>
+              <View style={styles.gridRow}>
+                <View style={styles.gridSquare} />
+                <View style={styles.gridSquare} />
+                <View style={styles.gridSquare} />
+              </View>
+              <View style={styles.gridRow}>
+                <View style={styles.gridSquare} />
+                <View style={styles.gridSquare} />
+                <View style={styles.gridSquare} />
+              </View>
+            </View>
+          </View>
+          <Text style={styles.viewAllText}>View All</Text>
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <TouchableOpacity 
+        style={styles.categoryCard} 
+        activeOpacity={0.8}
+        onPress={() => {
+          navigation.navigate('CategoryDetails', {
+            categoryId: item.id,
+            categoryName: item.name || 'BBQ Sale',
+          });
+        }}
+      >
+        <Image source={{ uri: item.image }} style={styles.categoryImage} />
+        <Text style={styles.categoryLabel}>BBQ Sale</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderTrendingProduct = ({ item }: { item: Product }) => (
     <TouchableOpacity
-      style={styles.productCard}
+      style={styles.trendingCard}
       onPress={() => navigation.navigate('ProductDetails', { productId: item.id })}
       activeOpacity={0.8}
     >
-      <Image source={{ uri: item.images[0] }} style={styles.productImage} />
-      {item.originalPrice && (
-        <View style={styles.discountBadge}>
-          <Text style={styles.discountText}>
-            -{Math.round((1 - item.price / item.originalPrice) * 100)}%
-          </Text>
-        </View>
-      )}
-      <View style={styles.productInfo}>
-        <Text style={[styles.productName, isDark && styles.textDark]} numberOfLines={2}>
+      <Image source={{ uri: item.images[0] }} style={styles.trendingImage} />
+      <View style={styles.trendingInfo}>
+        <Text style={styles.trendingProductTitle} numberOfLines={2}>
           {item.name}
         </Text>
-        <View style={styles.priceContainer}>
-          <Text style={styles.price}>${item.price.toFixed(2)}</Text>
-          {item.originalPrice && (
-            <Text style={styles.originalPrice}>${item.originalPrice.toFixed(2)}</Text>
-          )}
+        <View style={styles.trendingRating}>
+          {renderStars(item.rating, 12)}
+          <Text style={styles.trendingRatingCount}>({item.reviews})</Text>
         </View>
+        <Text style={styles.trendingPrice}>${item.price.toFixed(2)}</Text>
+        <Text style={styles.trendingSold}>{Math.floor(item.reviews / 10)}k+ sold</Text>
       </View>
     </TouchableOpacity>
   );
 
-  if (selectedCategory) {
-    return (
-      <SafeAreaView style={[styles.container, isDark && styles.containerDark]} edges={['top']}>
-        <View style={[styles.header, isDark && styles.headerDark]}>
-          <TouchableOpacity onPress={() => setSelectedCategory(null)}>
-            <IconSymbol name="chevron.left" size={24} color={isDark ? '#fff' : '#333'} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, isDark && styles.textDark]}>{selectedCategory}</Text>
-          <View style={{ width: 24 }} />
-        </View>
-        <FlatList
-          data={filteredProducts}
-          renderItem={renderProduct}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={styles.productList}
-          columnWrapperStyle={styles.productRow}
-          showsVerticalScrollIndicator={false}
-        />
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView style={[styles.container, isDark && styles.containerDark]} edges={['top']}>
-      <View style={[styles.header, isDark && styles.headerDark]}>
-        <Text style={[styles.headerTitle, isDark && styles.textDark]}>Categories</Text>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <TouchableOpacity
+          style={styles.searchBar}
+          onPress={handleSearchPress}
+          activeOpacity={0.7}
+        >
+          <IconSymbol name="magnifyingglass" size={18} color="#999999" />
+          <Text style={styles.searchPlaceholder}>What are you looking For?</Text>
+        </TouchableOpacity>
       </View>
-      <FlatList
-        data={categories}
-        renderItem={renderCategory}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={styles.categoriesList}
-        columnWrapperStyle={styles.categoryRow}
-        showsVerticalScrollIndicator={false}
-      />
+
+      <View style={styles.contentContainer}>
+        {/* Left Sidebar */}
+        <View style={styles.sidebar}>
+          <Text style={styles.sidebarTitle}>{selectedCategory}</Text>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {menuItems.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.menuItem,
+                  item === selectedCategory && styles.menuItemActive,
+                ]}
+                onPress={() => setSelectedCategory(item)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.menuItemText,
+                    item === selectedCategory && styles.menuItemTextActive,
+                  ]}
+                >
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Right Content Area */}
+        <ScrollView style={styles.mainContent} showsVerticalScrollIndicator={false}>
+          {/* Categories Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{selectedCategory}</Text>
+            <FlatList
+              data={[{ id: 'view-all' }, ...filteredCategories]}
+              renderItem={renderCategoryCard}
+              keyExtractor={(item, index) => item.id || `category-${index}`}
+              numColumns={3}
+              scrollEnabled={false}
+              contentContainerStyle={styles.categoriesGrid}
+              columnWrapperStyle={styles.categoryRow}
+            />
+          </View>
+
+          {/* Trending Items Section */}
+          <View style={styles.section}>
+            <Text style={styles.trendingTitle}>Trending Items</Text>
+            <FlatList
+              data={trendingProducts}
+              renderItem={renderTrendingProduct}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              scrollEnabled={false}
+              contentContainerStyle={styles.trendingGrid}
+              columnWrapperStyle={styles.trendingRow}
+            />
+          </View>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -119,129 +227,197 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
-  containerDark: {
-    backgroundColor: '#1a1a1a',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  searchContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#fff',
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
-  headerDark: {
-    backgroundColor: '#1a1a1a',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  textDark: {
-    color: '#fff',
-  },
-  categoriesList: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 20,
-  },
-  categoryRow: {
-    justifyContent: 'space-between',
-  },
-  categoryCard: {
-    width: ITEM_WIDTH,
-    height: 180,
-    marginBottom: 16,
-    borderRadius: 15,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  categoryImage: {
-    width: '100%',
-    height: '100%',
-  },
-  categoryOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  categoryName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  productList: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-  },
-  productRow: {
-    justifyContent: 'space-between',
-  },
-  productCard: {
-    width: ITEM_WIDTH,
-    marginBottom: 20,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  productImage: {
-    width: '100%',
-    height: ITEM_WIDTH * 1.3,
-    backgroundColor: '#f5f5f5',
-  },
-  discountBadge: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  discountText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  productInfo: {
-    padding: 12,
-  },
-  productName: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 6,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  priceContainer: {
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10,
   },
-  price: {
+  searchPlaceholder: {
+    fontSize: 14,
+    color: '#999999',
+    fontFamily: Fonts.regular,
+  },
+  contentContainer: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  sidebar: {
+    width: SIDEBAR_WIDTH,
+    backgroundColor: Colors.backgroundSecondary,
+    paddingTop: 16,
+    borderRightWidth: 1,
+    borderRightColor: '#E0E0E0',
+  },
+  sidebarTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FF6B9D',
+    color: Colors.primary,
+    fontFamily: Fonts.bold,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  menuItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  menuItemActive: {
+    backgroundColor: '#E8E8E0',
+  },
+  menuItemText: {
+    fontSize: 14,
+    color: '#1C2229',
+    fontFamily: Fonts.regular,
+  },
+  menuItemTextActive: {
+    fontFamily: Fonts.medium,
+  },
+  mainContent: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  section: {
+    padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.primary,
+    fontFamily: Fonts.bold,
+    marginBottom: 12,
+  },
+  categoriesGrid: {
+    paddingTop: 4,
+  },
+  categoryRow: {
+    justifyContent: 'flex-start',
+    gap: 8,
+    marginBottom: 8,
+  },
+  viewAllCard: {
+    width: CATEGORY_CARD_SIZE,
+    height: CATEGORY_CARD_SIZE,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 8,
   },
-  originalPrice: {
-    fontSize: 13,
-    color: '#999',
-    textDecorationLine: 'line-through',
+  viewAllIconContainer: {
+    marginBottom: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gridIconContainer: {
+    width: 24,
+    height: 24,
+    flexDirection: 'column',
+    gap: 2,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  gridSquare: {
+    width: 6,
+    height: 6,
+    backgroundColor: '#666666',
+    borderRadius: 1,
+  },
+  viewAllText: {
+    fontSize: 12,
+    color: '#666666',
+    fontFamily: Fonts.medium,
+  },
+  categoryCard: {
+    width: CATEGORY_CARD_SIZE,
+    marginRight: 8,
+  },
+  categoryImage: {
+    width: CATEGORY_CARD_SIZE,
+    height: CATEGORY_CARD_SIZE,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+  },
+  categoryLabel: {
+    fontSize: 12,
+    color: '#1C2229',
+    fontFamily: Fonts.regular,
+    textAlign: 'center',
+    marginTop: 6,
+  },
+  trendingTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1C2229',
+    fontFamily: Fonts.bold,
+    marginBottom: 16,
+  },
+  trendingGrid: {
+    paddingTop: 4,
+  },
+  trendingRow: {
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  trendingCard: {
+    width: PRODUCT_CARD_WIDTH,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  trendingImage: {
+    width: '100%',
+    height: PRODUCT_CARD_WIDTH * 1.2,
+    backgroundColor: '#F5F5F5',
+  },
+  trendingInfo: {
+    padding: 12,
+  },
+  trendingProductTitle: {
+    fontSize: 14,
+    color: '#1C2229',
+    fontFamily: Fonts.medium,
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  trendingRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 4,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  trendingRatingCount: {
+    fontSize: 12,
+    color: '#999999',
+    fontFamily: Fonts.regular,
+  },
+  trendingPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.error,
+    fontFamily: Fonts.bold,
+    marginBottom: 4,
+  },
+  trendingSold: {
+    fontSize: 12,
+    color: '#999999',
+    fontFamily: Fonts.regular,
   },
 });
-

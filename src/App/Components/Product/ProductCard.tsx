@@ -70,19 +70,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <Text style={styles.productName} numberOfLines={2}>
           {product.name}
         </Text>
+        <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+
+      
         <View style={styles.ratingContainer}>
+          <View style={styles.ratingStars}>
+
           <IconSymbol name="star.fill" size={12} color="#FFB800" />
           <Text style={styles.ratingText}>
             {product.rating} ({product.reviews})
           </Text>
-        </View>
+          </View>
         <View style={styles.productFooter}>
           <Text style={styles.price}>${product.price.toFixed(2)}</Text>
           <Text style={styles.soldText}>{Math.floor(product.reviews / 10)}k+ sold</Text>
         </View>
+        </View>
         <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
-          <IconSymbol name="plus.circle.fill" size={24} color={Colors.primary} />
+          <IconSymbol name="plus" size={22} color={Colors.white} />
         </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -107,7 +114,8 @@ const styles = StyleSheet.create({
   },
   productInfo: {
     padding: 12,
-    position: 'relative',
+    // 
+    // position: 'relative',
   },
   productName: {
     fontSize: 13,
@@ -117,8 +125,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
   ratingText: {
@@ -130,12 +138,13 @@ const styles = StyleSheet.create({
   productFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 4,
     alignItems: 'center',
   },
   price: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 'bold',
-    color: '#1C2229',
+    color: Colors.primary,
     fontFamily: Fonts.bold,
   },
   soldText: {
@@ -144,9 +153,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
   },
   addToCartButton: {
-    position: 'absolute',
-    bottom: 12,
-    right: 12,
+    // position: 'absolute',
+    // bottom: 12,
+    // right: 12,
+    backgroundColor: Colors.primary,
+    padding:5,
+    borderRadius: 12,
   },
   // Compact variant styles
   compactCard: {
@@ -171,6 +183,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999999',
     fontFamily: Fonts.regular,
+  },
+  ratingStars: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 0,
+    marginBottom: 4,
   },
 });
 

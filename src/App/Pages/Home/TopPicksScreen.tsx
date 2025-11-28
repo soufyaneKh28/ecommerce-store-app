@@ -7,11 +7,11 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import {
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -41,7 +41,7 @@ export default function TopPicksScreen() {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <IconSymbol name="chevron.left" size={24} color="#1C2229" />
+          <IconSymbol name="chevron.left" size={24} color={Colors.white} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Top picks</Text>
         <View style={styles.placeholder} />
@@ -73,25 +73,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    backgroundColor: Colors.primary,
+    // borderBottomWidth: 1,
+    // borderBottomColor: '#E0E0E0',
   },
   backButton: {
     padding: 4,
+
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1C2229',
+    color: Colors.textOnPrimary,
     fontFamily: Fonts.bold,
   },
   placeholder: {
     width: 32,
   },
   productList: {
+    backgroundColor: Colors.backgroundSecondary,
     paddingHorizontal: 20,
     paddingTop: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     paddingBottom: 100,
   },
   productRow: {

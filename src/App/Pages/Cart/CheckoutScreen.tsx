@@ -2,25 +2,36 @@ import { IconSymbol } from '@/src/App/Components/ui/icon-symbol';
 import { Colors, Fonts } from '@/src/constants/theme';
 import { useCartStore } from '@/src/stores/cartStore';
 import { CartItem } from '@/src/types/product';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Dimensions,
   Image,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RootStackParamList = {
   MainTabs: undefined;
   Cart: undefined;
   Checkout: undefined;
+  OrderSuccess: {
+    orderId: string;
+    total: number;
+    itemsCount: number;
+    paymentMethod: string;
+    address: string;
+    eta: string;
+  };
+  MyOrders: undefined;
 };
 
 type PaymentMethod = 'applePay' | 'payOnDelivery' | 'newCard';
@@ -31,9 +42,18 @@ export default function CheckoutScreen() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CartItem | null>(null);
-
+  const [priceBreakdownVisible, setPriceBreakdownVisible] = useState(false);
+  const [priceSheetVisible, setPriceSheetVisible] = useState(false);
+  const quantitySheetRef = useRef<BottomSheet>(null);
+  const quantitySnapPoints = useMemo(() => ['35%'], []);
+  const priceSheetRef = useRef<BottomSheet>(null);
+  const priceSnapPoints = useMemo(() => ['50%'], []);
   const totalItems = getCartItemsCount();
   const total = getCartTotal();
+  const deliveryFee = total > 150 ? 0 : 12.5;
+  const taxes = total * 0.08;
+  const discount = total > 200 ? total * 0.05 : 0;
+  const grandTotal = total + deliveryFee + taxes - discount;
 
   // Mock delivery address
   const deliveryAddress = {
@@ -42,16 +62,67 @@ export default function CheckoutScreen() {
     city: 'Istanbul 34010, Floor: 11',
   };
 
+  const handleQuantitySheetChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        setQuantityModalVisible(false);
+        setSelectedItem(null);
+      }
+    },
+    []
+  );
+
+  const handlePriceSheetChange = useCallback((index: number) => {
+        if (index === -1) {
+          setPriceSheetVisible(false);
+        }
+      }, []);
+    
+
+  const renderQuantityBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior="close"
+      />
+    ),
+    []
+  );
+
+  const renderPriceBackdrop = useCallback(
+       (props: any) => (
+         <BottomSheetBackdrop
+           {...props}
+            appearsOnIndex={0}
+            disappearsOnIndex={-1}
+            pressBehavior="close"
+          />
+        ),
+        []
+      );
+    
+
   const handleQuantitySelect = (item: CartItem, newQuantity: number) => {
     updateQuantity(item.product.id, newQuantity);
-    setQuantityModalVisible(false);
-    setSelectedItem(null);
+    quantitySheetRef.current?.close();
   };
 
   const openQuantityModal = (item: CartItem) => {
     setSelectedItem(item);
     setQuantityModalVisible(true);
+    requestAnimationFrame(() => {
+      quantitySheetRef.current?.snapToIndex(0);
+    });
   };
+
+  const openPriceSheet = () => {
+       setPriceSheetVisible(true);
+        requestAnimationFrame(() => {
+          priceSheetRef.current?.snapToIndex(0);
+        });
+      };
 
   const calculateDiscount = (item: CartItem) => {
     if (item.product.originalPrice) {
@@ -68,19 +139,23 @@ export default function CheckoutScreen() {
       Alert.alert('Payment Method Required', 'Please select a payment method.');
       return;
     }
-    Alert.alert(
-      'Order Placed!',
-      'Your order has been placed successfully.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            clearCart();
-            navigation.navigate('MainTabs');
-          },
-        },
-      ]
-    );
+
+    const orderSummary = {
+      orderId: `QTL-${Date.now().toString().slice(-6)}`,
+      total,
+      itemsCount: totalItems,
+      paymentMethod:
+        selectedPayment === 'applePay'
+          ? 'Apple Pay'
+          : selectedPayment === 'payOnDelivery'
+            ? 'Pay on Delivery'
+            : 'New Card',
+      address: `${deliveryAddress.address}, ${deliveryAddress.city}`,
+      eta: '1-3 Business Days',
+    };
+
+    clearCart();
+    navigation.navigate('OrderSuccess', orderSummary);
   };
 
   const renderCartItem = (item: CartItem) => {
@@ -126,6 +201,7 @@ export default function CheckoutScreen() {
   };
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
@@ -237,59 +313,174 @@ export default function CheckoutScreen() {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <View style={styles.totalContainer}>
+      <TouchableOpacity style={styles.totalContainer} activeOpacity={0.8} onPress={openPriceSheet}>
           <Text style={styles.totalLabel}>Total</Text>
           <View style={styles.totalValueRow}>
-            <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
-            <Text style={styles.chevronDown}>▼</Text>
+            <Text style={styles.totalValue}>${grandTotal.toFixed(2)}</Text>
+            <IconSymbol name="chevron.up.chevron.down" size={16} color="#1C2229" />
           </View>
-        </View>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.orderButton} onPress={handleOrderAndPay}>
           <Text style={styles.orderButtonText}>Order and pay ({totalItems})</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Quantity Modal */}
-      <Modal
-        visible={quantityModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setQuantityModalVisible(false)}
+      {/* Price Breakdown Modal */}
+      {/* <Modal
+        visible={priceBreakdownVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPriceBreakdownVisible(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setQuantityModalVisible(false)}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Quantity</Text>
-            {selectedItem && (
-              <>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((qty) => (
-                  <TouchableOpacity
-                    key={qty}
-                    style={[
-                      styles.quantityOption,
-                      selectedItem.quantity === qty && styles.quantityOptionActive,
-                    ]}
-                    onPress={() => handleQuantitySelect(selectedItem, qty)}
-                  >
-                    <Text
-                      style={[
-                        styles.quantityOptionText,
-                        selectedItem.quantity === qty && styles.quantityOptionTextActive,
-                      ]}
-                    >
-                      {qty}
+        <View style={styles.breakdownOverlay}>
+          <View style={styles.breakdownSheet}>
+            <View style={styles.breakdownHandle} />
+            <View style={styles.breakdownHeader}>
+              <Text style={styles.breakdownTitle}>Price Details</Text>
+              <TouchableOpacity onPress={() => setPriceBreakdownVisible(false)}>
+                <IconSymbol name="xmark" size={22} color="#1C2229" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.breakdownItemsRow}>
+                {cart.map((item) => (
+                  <View key={`${item.product.id}-${item.selectedColor}`} style={styles.breakdownItem}>
+                    <Image source={{ uri: item.product.images[0] }} style={styles.breakdownImage} />
+                    <Text style={styles.breakdownItemName} numberOfLines={2}>
+                      {item.product.name}
                     </Text>
-                  </TouchableOpacity>
+                    <Text style={styles.breakdownItemPrice}>${item.product.price.toFixed(2)}</Text>
+                  </View>
                 ))}
-              </>
-            )}
+              </View>
+
+              <View style={styles.breakdownList}>
+                <View style={styles.breakdownRow}>
+                  <Text style={styles.breakdownLabel}>Subtotal</Text>
+                  <Text style={styles.breakdownValue}>${total.toFixed(2)}</Text>
+                </View>
+                <View style={styles.breakdownRow}>
+                  <Text style={styles.breakdownLabel}>Delivery</Text>
+                  <Text style={styles.breakdownValue}>
+                    {deliveryFee === 0 ? 'Free' : `$${deliveryFee.toFixed(2)}`}
+                  </Text>
+                </View>
+                <View style={styles.breakdownRow}>
+                  <Text style={styles.breakdownLabel}>Taxes</Text>
+                  <Text style={styles.breakdownValue}>${taxes.toFixed(2)}</Text>
+                </View>
+                <View style={styles.breakdownRow}>
+                  <Text style={styles.breakdownLabel}>Discount</Text>
+                  <Text style={[styles.breakdownValue, styles.negativeValue]}>
+                    -${discount.toFixed(2)}
+                  </Text>
+                </View>
+                <View style={[styles.breakdownRow, styles.breakdownRowTotal]}>
+                  <Text style={styles.breakdownTotalLabel}>Grand Total</Text>
+                  <Text style={styles.breakdownTotalValue}>${grandTotal.toFixed(2)}</Text>
+                </View>
+              </View>
+            </ScrollView>
           </View>
-        </TouchableOpacity>
-      </Modal>
+        </View>
+      </Modal> */}
+       <BottomSheet
+        ref={priceSheetRef}
+       index={priceSheetVisible ? 0 : -1}
+       snapPoints={priceSnapPoints}
+       enablePanDownToClose
+      //  style={{backgroundColor: 'red'}}
+       onChange={handlePriceSheetChange}
+       backdropComponent={renderPriceBackdrop}
+     >
+       <BottomSheetView style={styles.breakdownSheet}>
+         {/* <View style={styles.breakdownHandle} /> */}
+         <View style={styles.breakdownHeader}>
+           <Text style={styles.breakdownTitle}>Price Details</Text>
+           <TouchableOpacity onPress={() => priceSheetRef.current?.close()}>
+             <IconSymbol name="xmark" size={22} color="#1C2229" />
+           </TouchableOpacity>
+         </View>
+         <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+           <View style={styles.breakdownItemsRow}>
+             {cart.map((item) => (
+               <View key={`${item.product.id}-${item.selectedColor}`} style={styles.breakdownItem}>
+                 <Image source={{ uri: item.product.images[0] }} style={styles.breakdownImage} />
+                 <Text style={styles.breakdownItemName} numberOfLines={2}>
+                   {item.product.name}
+                 </Text>
+                 <Text style={styles.breakdownItemPrice}>${item.product.price.toFixed(2)}</Text>
+               </View>
+             ))}
+           </View>
+
+           <View style={styles.breakdownList}>
+             <View style={styles.breakdownRow}>
+               <Text style={styles.breakdownLabel}>Subtotal</Text>
+               <Text style={styles.breakdownValue}>${total.toFixed(2)}</Text>
+             </View>
+             <View style={styles.breakdownRow}>
+               <Text style={styles.breakdownLabel}>Delivery</Text>
+               <Text style={styles.breakdownValue}>
+                 {deliveryFee === 0 ? 'Free' : `$${deliveryFee.toFixed(2)}`}
+               </Text>
+             </View>
+             <View style={styles.breakdownRow}>
+               <Text style={styles.breakdownLabel}>Taxes</Text>
+               <Text style={styles.breakdownValue}>${taxes.toFixed(2)}</Text>
+             </View>
+             <View style={styles.breakdownRow}>
+               <Text style={styles.breakdownLabel}>Discount</Text>
+               <Text style={[styles.breakdownValue, styles.negativeValue]}>-${discount.toFixed(2)}</Text>
+             </View>
+             <View style={[styles.breakdownRow, styles.breakdownRowTotal]}>
+               <Text style={styles.breakdownTotalLabel}>Grand Total</Text>
+               <Text style={styles.breakdownTotalValue}>${grandTotal.toFixed(2)}</Text>
+             </View>
+           </View>
+        </BottomSheetScrollView>
+        </BottomSheetView>
+      </BottomSheet>
     </SafeAreaView>
+    <BottomSheet
+      ref={quantitySheetRef}
+      index={quantityModalVisible ? 0 : -1}
+      snapPoints={quantitySnapPoints}
+      enablePanDownToClose
+    //  style={{backgroundColor: 'red'}}
+      onChange={handleQuantitySheetChange}
+      backdropComponent={renderQuantityBackdrop}
+    >
+      <BottomSheetView style={styles.quantitySheet}>
+        <View style={styles.quantityHeader}>
+          <Text style={styles.modalTitle}>Select Quantity</Text>
+          <TouchableOpacity onPress={() => quantitySheetRef.current?.close()}>
+            <IconSymbol name="xmark" size={22} color="#1C2229" />
+          </TouchableOpacity>
+        </View>
+        {selectedItem && (
+          <View style={styles.quantityGrid}>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((qty) => {
+              const isActive = selectedItem.quantity === qty;
+              return (
+                <TouchableOpacity
+                  key={qty}
+                  style={[styles.quantityChip, isActive && styles.quantityChipActive]}
+                  onPress={() => handleQuantitySelect(selectedItem, qty)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.quantityChipText, isActive && styles.quantityChipTextActive]}>
+                    {qty}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+      </BottomSheetView>
+    </BottomSheet>
+    </GestureHandlerRootView>
   );
 }
 
@@ -587,45 +778,165 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: Fonts.bold,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    width: '80%',
-    maxHeight: 400,
-  },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1C2229',
     fontFamily: Fonts.bold,
-    marginBottom: 16,
-    textAlign: 'center',
   },
-  quantityOption: {
+  quantitySheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  quantityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  quantityGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  quantityChip: {
+    width: '22%',
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    backgroundColor: '#F6F6F6',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
-  quantityOptionActive: {
+  quantityChipActive: {
     backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
-  quantityOptionText: {
+  quantityChipText: {
     fontSize: 16,
     color: '#1C2229',
     fontFamily: Fonts.medium,
-    textAlign: 'center',
   },
-  quantityOptionTextActive: {
+  quantityChipTextActive: {
     color: '#FFFFFF',
+  },
+  breakdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'flex-end',
+   
+  },
+  breakdownListContainer: {
+    // paddingBottom: 100,
+    // flex: 1,
+  },
+  breakdownSheet: {
+    backgroundColor: Colors.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 120,
+    // maxHeight: '70%',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    // backgroundColor: 'blue',
+  },
+  breakdownHandle: {
+    alignSelf: 'center',
+    width: 48,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E0E0E0',
+    marginBottom: 12,
+  },
+  breakdownHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  breakdownTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1C2229',
+    fontFamily: Fonts.bold,
+  },
+  breakdownItemsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 20,
+  },
+  breakdownItem: {
+    width: (Dimensions.get('window').width - 20 * 2 - 12 * 2) / 3,
+    borderWidth: 1,
+    borderColor: '#F1F1F1',
+    borderRadius: 16,
+    padding: 10,
+    alignItems: 'flex-start',
+    backgroundColor: '#FAFAFA',
+  },
+  breakdownImage: {
+    width: '100%',
+    height: 60,
+    borderRadius: 10,
+    marginBottom: 6,
+    backgroundColor: '#F5F5F5',
+  },
+  breakdownItemName: {
+    fontSize: 11,
+    color: '#4C4C4C',
+    textAlign: 'left',
+    marginBottom: 4,
+    fontFamily: Fonts.medium,
+  },
+  breakdownItemPrice: {
+    fontSize: 12,
+    color: Colors.primary,
+    fontFamily: Fonts.bold,
+  },
+  breakdownList: {
+    borderTopWidth: 1,
+    borderTopColor: '#F1F1F1',
+    paddingTop: 16,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  breakdownLabel: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: Fonts.regular,
+  },
+  breakdownValue: {
+    fontSize: 14,
+    color: '#1C2229',
+    fontFamily: Fonts.medium,
+  },
+  negativeValue: {
+    color: Colors.primary,
+  },
+  breakdownRowTotal: {
+    borderTopWidth: 1,
+    borderTopColor: '#F1F1F1',
+    paddingTop: 12,
+    marginTop: 8,
+  },
+  breakdownTotalLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    fontFamily: Fonts.bold,
+  },
+  breakdownTotalValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1C2229',
+    fontFamily: Fonts.bold,
   },
 });
 

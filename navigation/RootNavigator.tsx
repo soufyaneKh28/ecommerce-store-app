@@ -1,18 +1,29 @@
 import {
-    CartScreen,
-    CategoryDetailsScreen,
-    CheckoutScreen,
-    ForgotPasswordScreen,
-    LoginScreen,
-    MyOrdersScreen,
-    OnboardingScreen,
-    ProductDetailsScreen,
-    ReviewsScreen,
-    SearchScreen,
-    SettingsScreen,
-    SignupScreen,
-    SplashScreen,
-    TopPicksScreen,
+  AboutScreen,
+  AddressesScreen,
+  CartScreen,
+  CategoryDetailsScreen,
+  ChangePasswordScreen,
+  CheckoutScreen,
+  EditInformationScreen,
+  FAQScreen,
+  ForgotPasswordScreen,
+  LoginScreen,
+  MessagesScreen,
+  MyOrdersScreen,
+  NotificationsScreen,
+  OnboardingScreen,
+  OrderSuccessScreen,
+  ProductDetailsScreen,
+  ReviewsScreen,
+  SearchScreen,
+  SettingsScreen,
+  SignupScreen,
+  SplashScreen,
+  SupportScreen,
+  TermsScreen,
+  TopPicksScreen,
+  WishlistScreen,
 } from '@/src/App/Pages';
 import { useAuthStore } from '@/src/stores/authStore';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -32,7 +43,25 @@ export type RootStackParamList = {
   CategoryDetails: { categoryId: string; categoryName: string };
   Cart: undefined;
   Checkout: undefined;
+  OrderSuccess: {
+    orderId: string;
+    total: number;
+    itemsCount: number;
+    paymentMethod: string;
+    address: string;
+    eta: string;
+  };
   MyOrders: undefined;
+  Messages: undefined;
+  About: undefined;
+  Support: undefined;
+  Wishlist: undefined;
+  FAQ: undefined;
+  Terms: undefined;
+  EditInformation: undefined;
+  ChangePassword: undefined;
+  Notifications: undefined;
+  Addresses: undefined;
   Settings: undefined;
   TopPicks: undefined;
   Search: undefined;
@@ -62,7 +91,7 @@ export default function RootNavigator() {
     <Stack.Navigator 
       screenOptions={{ 
         headerShown: false,
-        animation: 'fade',
+        animation: 'slide_from_right',
       }}
     >
       {!hasSeenOnboarding ? (
@@ -70,20 +99,8 @@ export default function RootNavigator() {
       ) : !user ? (
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen 
-            name="Signup" 
-            component={SignupScreen}
-            options={{
-              animation: 'fade',
-            }}
-          />
-          <Stack.Screen 
-            name="ForgotPassword" 
-            component={ForgotPasswordScreen}
-            options={{
-              animation: 'fade',
-            }}
-          />
+          <Stack.Screen name="Signup" component={SignupScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           {/* Allow MainTabs to be accessible without auth */}
           <Stack.Screen name="MainTabs" component={TabNavigator} />
           <Stack.Screen
@@ -127,8 +144,96 @@ export default function RootNavigator() {
             }}
           />
           <Stack.Screen
+            name="OrderSuccess"
+            component={OrderSuccessScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
             name="MyOrders"
             component={MyOrdersScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="Messages"
+            component={MessagesScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="Addresses"
+            component={AddressesScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="EditInformation"
+            component={EditInformationScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="ChangePassword"
+            component={ChangePasswordScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="Notifications"
+            component={NotificationsScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="About"
+            component={AboutScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="Support"
+            component={SupportScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="Wishlist"
+            component={WishlistScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="FAQ"
+            component={FAQScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="Terms"
+            component={TermsScreen}
             options={{
               headerShown: false,
               animation: 'slide_from_right',
@@ -203,8 +308,96 @@ export default function RootNavigator() {
             }}
           />
           <Stack.Screen
+            name="OrderSuccess"
+            component={OrderSuccessScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
             name="MyOrders"
             component={MyOrdersScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="Messages"
+            component={MessagesScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="Addresses"
+            component={AddressesScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="EditInformation"
+            component={EditInformationScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="ChangePassword"
+            component={ChangePasswordScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="Notifications"
+            component={NotificationsScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="About"
+            component={AboutScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="Support"
+            component={SupportScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="Wishlist"
+            component={WishlistScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="FAQ"
+            component={FAQScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="Terms"
+            component={TermsScreen}
             options={{
               headerShown: false,
               animation: 'slide_from_right',

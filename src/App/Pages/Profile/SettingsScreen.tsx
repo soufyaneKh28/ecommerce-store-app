@@ -14,6 +14,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RootStackParamList = {
   Settings: undefined;
+  EditInformation: undefined;
+  ChangePassword: undefined;
+  Notifications: undefined;
 };
 
 interface SettingsOption {
@@ -63,7 +66,19 @@ export default function SettingsScreen() {
       return;
     }
 
-    Alert.alert(option.label, 'This feature will be available soon!');
+    switch (option.id) {
+      case 'edit':
+        navigation.navigate('EditInformation');
+        break;
+      case 'password':
+        navigation.navigate('ChangePassword');
+        break;
+      case 'notifications':
+        navigation.navigate('Notifications');
+        break;
+      default:
+        break;
+    }
   };
 
   return (

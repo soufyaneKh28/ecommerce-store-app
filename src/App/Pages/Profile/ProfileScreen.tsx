@@ -1,7 +1,7 @@
 import { IconSymbol } from '@/src/App/Components/ui/icon-symbol';
 import { Colors, Fonts } from '@/src/constants/theme';
 import { useAuthStore } from '@/src/stores/authStore';
-import { useNavigation } from '@react-navigation/native';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import {
@@ -17,7 +17,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 type RootStackParamList = {
   MainTabs: undefined;
   MyOrders: undefined;
+  Messages: undefined;
+  Addresses: undefined;
+  About: undefined;
+  Support: undefined;
+  Wishlist: undefined;
+  FAQ: undefined;
+  Terms: undefined;
   Settings: undefined;
+  EditInformation: undefined;
+  ChangePassword: undefined;
+  Notifications: undefined;
 };
 
 interface MenuItem {
@@ -27,7 +37,7 @@ interface MenuItem {
 }
 
 export default function ProfileScreen() {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handlePress = (title: string) => {
@@ -41,39 +51,39 @@ export default function ProfileScreen() {
       onPress: () => navigation.navigate('MyOrders'),
     },
     {
-      icon: 'bubble.left.and.bubble.right.fill',
-      title: 'Messages',
-      onPress: () => handlePress('Messages'),
+      icon: 'heart.fill',
+      title: 'Wishlist',
+      onPress: () => navigation.navigate('Wishlist'),
     },
     {
-      icon: 'star.fill',
-      title: 'Reviews',
-      onPress: () => handlePress('Reviews'),
+      icon: 'bubble.left.and.bubble.right.fill',
+      title: 'Messages',
+      onPress: () => navigation.navigate('Messages'),
     },
     {
       icon: 'location.fill',
       title: 'Addresses',
-      onPress: () => handlePress('Addresses'),
+      onPress: () => navigation.navigate('Addresses'),
     },
     {
       icon: 'info.circle.fill',
       title: 'About Us',
-      onPress: () => handlePress('About Us'),
+      onPress: () => navigation.navigate('About'),
     },
     {
       icon: 'questionmark.circle.fill',
       title: 'Support',
-      onPress: () => handlePress('Support'),
+      onPress: () => navigation.navigate('Support'),
     },
     {
       icon: 'doc.text.fill',
       title: 'FAQ',
-      onPress: () => handlePress('FAQ'),
+      onPress: () => navigation.navigate('FAQ'),
     },
     {
       icon: 'doc.text.fill',
       title: 'Terms of use',
-      onPress: () => handlePress('Terms of use'),
+      onPress: () => navigation.navigate('Terms'),
     },
   ];
 
@@ -124,7 +134,11 @@ export default function ProfileScreen() {
       </View>
 
       {/* Menu Items */}
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.menuContainer}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
@@ -141,8 +155,29 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           ))}
         </View>
+
+        <TouchableOpacity
+          style={styles.logoutButton}
+          activeOpacity={0.8}
+          onPress={async () => {
+            await logout();
+            const resetAction = CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'Login' as never }],
+            });
+            const parentNavigation = navigation.getParent();
+            if (parentNavigation) {
+              parentNavigation.dispatch(resetAction);
+            } else {
+              navigation.dispatch(resetAction);
+            }
+          }}
+        >
+          <Text style={styles.logoutText}>Log out</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
+
   );
 }
 
@@ -202,9 +237,27 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 40,
+  },
   menuContainer: {
     backgroundColor: '#FFFFFF',
     marginTop: 8,
+  },
+  logoutButton: {
+    margin: 20,
+    borderWidth: 1,
+    borderColor: '#FFD8C5',
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    backgroundColor: '#FFF4ED',
+  },
+  logoutText: {
+    color: Colors.primary,
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Fonts.medium,
   },
   menuItem: {
     flexDirection: 'row',

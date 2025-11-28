@@ -7,15 +7,15 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
 import {
-  Dimensions,
-  FlatList,
-  Image,
+    Dimensions,
+    FlatList,
+    Image,
   ScrollView,
-  StyleSheet,
-  Text,
+    StyleSheet,
+    Text,
   TextInput,
-  TouchableOpacity,
-  View,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -110,20 +110,20 @@ export default function CategoriesScreen() {
     }
 
     return (
-      <TouchableOpacity 
-        style={styles.categoryCard} 
-        activeOpacity={0.8}
+    <TouchableOpacity
+      style={styles.categoryCard}
+      activeOpacity={0.8}
         onPress={() => {
           navigation.navigate('CategoryDetails', {
             categoryId: item.id,
             categoryName: item.name || 'BBQ Sale',
           });
         }}
-      >
-        <Image source={{ uri: item.image }} style={styles.categoryImage} />
+    >
+      <Image source={{ uri: item.image }} style={styles.categoryImage} />
         <Text style={styles.categoryLabel}>BBQ Sale</Text>
-      </TouchableOpacity>
-    );
+    </TouchableOpacity>
+  );
   };
 
   const renderTrendingProduct = ({ item }: { item: Product }) => (
@@ -147,7 +147,7 @@ export default function CategoriesScreen() {
     </TouchableOpacity>
   );
 
-  return (
+    return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -184,7 +184,7 @@ export default function CategoriesScreen() {
                 >
                   {item}
                 </Text>
-              </TouchableOpacity>
+          </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
@@ -208,15 +208,15 @@ export default function CategoriesScreen() {
           {/* Trending Items Section */}
           <View style={styles.section}>
             <Text style={styles.trendingTitle}>Trending Items</Text>
-            <FlatList
+        <FlatList
               data={trendingProducts}
               renderItem={renderTrendingProduct}
-              keyExtractor={(item) => item.id}
-              numColumns={2}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
               scrollEnabled={false}
               contentContainerStyle={styles.trendingGrid}
               columnWrapperStyle={styles.trendingRow}
-            />
+        />
           </View>
         </ScrollView>
       </View>

@@ -3,21 +3,22 @@ import { Colors, Fonts } from '@/src/constants/theme';
 import { products } from '@/src/data/products';
 import { useCartStore } from '@/src/stores/cartStore';
 import { CartItem, Product } from '@/src/types/product';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Dimensions,
   FlatList,
   Image,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -34,6 +35,8 @@ export default function CartScreen() {
   const { cart, removeFromCart, updateQuantity, getCartTotal, clearCart, getCartItemsCount, addToCart } = useCartStore();
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CartItem | null>(null);
+  const quantitySheetRef = useRef<BottomSheet>(null);
+  const quantitySnapPoints = useMemo(() => ['35%'], []);
 
   // Get recommended products (exclude items in cart)
   const cartProductIds = cart.map((item) => item.product.id);
@@ -49,15 +52,39 @@ export default function CartScreen() {
     navigation.navigate('Checkout');
   };
 
+  const handleQuantitySheetChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        setQuantityModalVisible(false);
+        setSelectedItem(null);
+      }
+    },
+    []
+  );
+
+  const renderQuantityBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior="close"
+      />
+    ),
+    []
+  );
+
   const handleQuantitySelect = (item: CartItem, newQuantity: number) => {
     updateQuantity(item.product.id, newQuantity);
-    setQuantityModalVisible(false);
-    setSelectedItem(null);
+    quantitySheetRef.current?.close();
   };
 
   const openQuantityModal = (item: CartItem) => {
     setSelectedItem(item);
     setQuantityModalVisible(true);
+    requestAnimationFrame(() => {
+      quantitySheetRef.current?.snapToIndex(0);
+    });
   };
 
   const calculateDiscount = (item: CartItem) => {
@@ -96,14 +123,14 @@ export default function CartScreen() {
 
     return (
       <View key={`${item.product.id}-${item.selectedSize}-${item.selectedColor}`} style={styles.cartItem}>
-        <Image source={{ uri: item.product.images[0] }} style={styles.itemImage} />
-        <View style={styles.itemDetails}>
+      <Image source={{ uri: item.product.images[0] }} style={styles.itemImage} />
+      <View style={styles.itemDetails}>
           <Text style={styles.itemName} numberOfLines={2}>
-            {item.product.name}
-          </Text>
+          {item.product.name}
+        </Text>
           <Text style={styles.bestSellingTag}>{bestSellingTag}</Text>
           <View style={styles.priceRow}>
-            <Text style={styles.itemPrice}>${item.product.price.toFixed(2)}</Text>
+        <Text style={styles.itemPrice}>${item.product.price.toFixed(2)}</Text>
             {discount > 0 && (
               <View style={styles.discountBadge}>
                 <Text style={styles.discountText}>-{discount}%</Text>
@@ -151,8 +178,8 @@ export default function CartScreen() {
           <View>
             <Text style={styles.recommendedPrice}>${item.price.toFixed(2)}</Text>
             <Text style={styles.recommendedSold}>{Math.floor(item.reviews / 10)}k+ sold</Text>
-          </View>
-          <TouchableOpacity
+      </View>
+      <TouchableOpacity
             style={styles.addToCartButton}
             onPress={(e) => {
               e.stopPropagation();
@@ -160,10 +187,10 @@ export default function CartScreen() {
               Alert.alert('Added to Cart!', `${item.name} has been added to your cart.`);
             }}
             activeOpacity={0.7}
-          >
+      >
             <IconSymbol name="cart" size={16} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
+      </TouchableOpacity>
+    </View>
       </View>
     </TouchableOpacity>
   );
@@ -171,6 +198,7 @@ export default function CartScreen() {
   const totalItems = getCartItemsCount();
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
@@ -180,7 +208,7 @@ export default function CartScreen() {
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <IconSymbol name="chevron.left" size={24} color="#1C2229" />
-        </TouchableOpacity>
+          </TouchableOpacity>
         <Text style={styles.headerTitle}>Cart ({totalItems})</Text>
         <View style={styles.backButton} />
       </View>
@@ -200,7 +228,7 @@ export default function CartScreen() {
           >
             {/* Cart Items */}
             <View style={styles.cartItemsContainer}>
-              {cart.map(renderCartItem)}
+            {cart.map(renderCartItem)}
             </View>
 
             {/* Recommended Products */}
@@ -232,47 +260,46 @@ export default function CartScreen() {
         </>
       )}
 
-      {/* Quantity Modal */}
-      <Modal
-        visible={quantityModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setQuantityModalVisible(false)}
+      {/* Quantity Bottom Sheet */}
+      <BottomSheet
+        ref={quantitySheetRef}
+        index={quantityModalVisible ? 0 : -1}
+        snapPoints={quantitySnapPoints}
+        enablePanDownToClose
+        onChange={handleQuantitySheetChange}
+        backdropComponent={renderQuantityBackdrop}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setQuantityModalVisible(false)}
-        >
-          <View style={styles.modalContent}>
+        <BottomSheetView style={styles.quantitySheet}>
+          {/* <View style={styles.breakdownHandle} /> */}
+          <View style={styles.quantityHeader}>
             <Text style={styles.modalTitle}>Select Quantity</Text>
-            {selectedItem && (
-              <>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((qty) => (
+            <TouchableOpacity onPress={() => quantitySheetRef.current?.close()}>
+              <IconSymbol name="xmark" size={22} color="#1C2229" />
+            </TouchableOpacity>
+          </View>
+          {selectedItem && (
+            <View style={styles.quantityGrid}>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((qty) => {
+                const isActive = selectedItem.quantity === qty;
+                return (
                   <TouchableOpacity
                     key={qty}
-                    style={[
-                      styles.quantityOption,
-                      selectedItem.quantity === qty && styles.quantityOptionActive,
-                    ]}
+                    style={[styles.quantityChip, isActive && styles.quantityChipActive]}
                     onPress={() => handleQuantitySelect(selectedItem, qty)}
+                    activeOpacity={0.8}
                   >
-                    <Text
-                      style={[
-                        styles.quantityOptionText,
-                        selectedItem.quantity === qty && styles.quantityOptionTextActive,
-                      ]}
-                    >
+                    <Text style={[styles.quantityChipText, isActive && styles.quantityChipTextActive]}>
                       {qty}
                     </Text>
                   </TouchableOpacity>
-                ))}
-              </>
-            )}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+                );
+              })}
+            </View>
+          )}
+        </BottomSheetView>
+      </BottomSheet>
     </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
@@ -537,42 +564,61 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    width: width * 0.8,
-    maxHeight: 400,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'flex-end',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1C2229',
     fontFamily: Fonts.bold,
+  },
+  quantitySheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  quantityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
-    textAlign: 'center',
   },
-  quantityOption: {
+  breakdownHandle: {
+    alignSelf: 'center',
+    width: 48,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E0E0E0',
+    marginBottom: 12,
+  },
+  quantityGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  quantityChip: {
+    width: '22%',
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 8,
+    borderRadius: 12,
     backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
-  quantityOptionActive: {
+  quantityChipActive: {
     backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
-  quantityOptionText: {
+  quantityChipText: {
     fontSize: 16,
     color: '#1C2229',
     fontFamily: Fonts.medium,
-    textAlign: 'center',
   },
-  quantityOptionTextActive: {
+  quantityChipTextActive: {
     color: '#FFFFFF',
   },
 });

@@ -42,7 +42,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     // Bypass auth and navigate directly to home
-    navigation.navigate('MainTabs');
+    navigation.replace('MainTabs');
     return;
 
     // Original auth code (commented out)

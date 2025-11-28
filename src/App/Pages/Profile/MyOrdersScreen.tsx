@@ -1,41 +1,16 @@
+import { Order, OrderCard } from '@/src/App/Components/Order/OrderCard';
 import { IconSymbol } from '@/src/App/Components/ui/icon-symbol';
 import { Colors, Fonts } from '@/src/constants/theme';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import {
-  Image,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RootStackParamList = {
   MainTabs: undefined;
   MyOrders: undefined;
 };
-
-type OrderStatus = 'received' | 'cancelled' | 'delivered';
-
-interface OrderItem {
-  id: string;
-  productId: string;
-  productName: string;
-  productImage: string;
-  size: string;
-  color: string;
-}
-
-interface Order {
-  id: string;
-  status: OrderStatus;
-  date: string;
-  items: OrderItem[];
-}
 
 // Mock orders data
 const mockOrders: Order[] = [
@@ -106,35 +81,6 @@ export default function MyOrdersScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [showFilterModal, setShowFilterModal] = useState(false);
 
-  const getStatusConfig = (status: OrderStatus) => {
-    switch (status) {
-      case 'received':
-        return {
-          title: 'Order Received',
-          iconColor: '#4A90E2',
-          backgroundColor: '#E8F4FD',
-        };
-      case 'cancelled':
-        return {
-          title: 'Order Cancelled',
-          iconColor: '#FFB6C1',
-          backgroundColor: '#FFF0F5',
-        };
-      case 'delivered':
-        return {
-          title: 'Order Delivered',
-          iconColor: '#90EE90',
-          backgroundColor: '#F0FFF0',
-        };
-      default:
-        return {
-          title: 'Order',
-          iconColor: '#CCCCCC',
-          backgroundColor: '#F5F5F5',
-        };
-    }
-  };
-
   const handleCancelOrder = (orderId: string) => {
     // Handle cancel order
   };
@@ -149,82 +95,6 @@ export default function MyOrdersScreen() {
 
   const handleReorder = (orderId: string) => {
     // Handle reorder
-  };
-
-  const renderOrderItem = (item: OrderItem) => (
-    <View key={item.id} style={styles.orderItem}>
-      <Image source={{ uri: item.productImage }} style={styles.orderItemImage} />
-      <View style={styles.orderItemDetails}>
-        <Text style={styles.orderItemName} numberOfLines={2}>
-          {item.productName}
-        </Text>
-        <Text style={styles.bestSellingTag}>#8 Best-Selling Item in Office Lighting</Text>
-        <Text style={styles.orderItemVariant}>
-          Size: {item.size} Color: {item.color}
-        </Text>
-      </View>
-    </View>
-  );
-
-  const renderOrder = (order: Order) => {
-    const config = getStatusConfig(order.status);
-
-    return (
-      <View key={order.id} style={styles.orderCard}>
-        <View style={styles.orderHeader}>
-          <View style={[styles.statusIcon, { backgroundColor: config.backgroundColor }]}>
-            <IconSymbol name="shippingbox.fill" size={24} color={config.iconColor} />
-          </View>
-          <View style={styles.orderHeaderText}>
-            <Text style={styles.orderStatusTitle}>{config.title}</Text>
-            <Text style={styles.orderDate}>{order.date}</Text>
-          </View>
-        </View>
-
-        <View style={styles.orderItemsContainer}>
-          {order.items.map(renderOrderItem)}
-        </View>
-
-        {/* Action Buttons */}
-        {order.status === 'received' && (
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => handleCancelOrder(order.id)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.trackButton}
-              onPress={() => handleTrackOrder(order.id)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.trackButtonText}>Track</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {order.status === 'delivered' && (
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={styles.rateButton}
-              onPress={() => handleRateOrder(order.id)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.rateButtonText}>Rate Order</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.reorderButton}
-              onPress={() => handleReorder(order.id)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.reorderButtonText}>Reorder</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    );
   };
 
   return (
@@ -254,7 +124,16 @@ export default function MyOrdersScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {mockOrders.map(renderOrder)}
+        {mockOrders.map((order) => (
+          <OrderCard
+            key={order.id}
+            order={order}
+            onCancel={handleCancelOrder}
+            onTrack={handleTrackOrder}
+            onRate={handleRateOrder}
+            onReorder={handleReorder}
+          />
+        ))}
       </ScrollView>
 
       {/* Filter Modal */}

@@ -17,14 +17,15 @@ const BACKGROUND_COLOR = Colors.background;
 
 export default function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const getCartItemsCount = useCartStore((state) => state.getCartItemsCount);
-  const cartCount = getCartItemsCount();
+  const cartCount = useCartStore((store) =>
+    store.cart.reduce((total, item) => total + item.quantity, 0),
+  );
 
   // Animation for wave indicator
   const waveAnim = useRef(new Animated.Value(state.index * TAB_WIDTH)).current;
   const scaleAnims = useRef(state.routes.map((_, index) => new Animated.Value(index === state.index ? 1.1 : 1))).current;
   const opacityAnims = useRef(state.routes.map((_, index) => new Animated.Value(index === state.index ? 1 : 0.6))).current;
-  const labelOpacityAnims = useRef(state.routes.map((_, index) => new Animated.Value(index === state.index ? 1 : 0))).current;
+  const labelOpacityAnims = useRef(state.routes.map((_, index) => new Animated.Value(index === state.index ? 1 : 0.5))).current;
 
   useEffect(() => {
     // Animate wave indicator to active tab position
@@ -57,7 +58,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
     // Animate label opacity (fade in/out)
     labelOpacityAnims.forEach((anim, index) => {
       Animated.timing(anim, {
-        toValue: index === state.index ? 1 : 0,
+        toValue: index === state.index ? 1 : 0.5,
         duration: 200,
         useNativeDriver: true,
       }).start();
@@ -206,6 +207,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
                   styles.tabLabel,
                   {
                     opacity: labelOpacityAnims[index],
+                    color: isFocused ? ACTIVE_COLOR : '#8E8E93',
                   },
                 ]}
                 numberOfLines={1}

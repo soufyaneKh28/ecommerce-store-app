@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -89,6 +90,7 @@ export default function ProductDetailsScreen({ route, navigation }: Props) {
   const [showNavButtons, setShowNavButtons] = useState(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
+  const carouselRef = useRef<ICarouselInstance>(null);
   const [sectionPositions, setSectionPositions] = useState({
     info: 0,
     reviews: 0,
@@ -252,24 +254,56 @@ export default function ProductDetailsScreen({ route, navigation }: Props) {
       >
         {/* Image Carousel */}
         <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: product.images[selectedImageIndex] }}
-            style={styles.mainImage}
-            resizeMode="cover"
+          <Carousel
+            ref={carouselRef}
+            width={width}
+            height={width * 1.1}
+            data={product.images}
+            scrollAnimationDuration={600}
+            onSnapToItem={(index) => setSelectedImageIndex(index)}
+            renderItem={({ item }) => (
+              <Image source={{ uri: item }} style={styles.mainImage} resizeMode="cover" />
+            )}
           />
-          {/* Image Indicators */}
+
           {product.images.length > 1 && (
+            <>
             <View style={styles.indicators}>
               {product.images.map((_, index) => (
-                <View
-                  key={index}
+                  <TouchableOpacity
+                    key={`indicator-${index}`}
                   style={[
                     styles.indicator,
                     index === selectedImageIndex && styles.indicatorActive,
                   ]}
+                    onPress={() => {
+                      setSelectedImageIndex(index);
+                      carouselRef.current?.scrollTo({ index, animated: true });
+                    }}
+                    activeOpacity={0.7}
                 />
               ))}
             </View>
+
+              <View style={styles.thumbnailRow}>
+                {product.images.map((image, index) => (
+                  <TouchableOpacity
+                    key={`thumb-${index}`}
+                    style={[
+                      styles.thumbnailWrapper,
+                      index === selectedImageIndex && styles.thumbnailWrapperActive,
+                    ]}
+                    onPress={() => {
+                      setSelectedImageIndex(index);
+                      carouselRef.current?.scrollTo({ index, animated: true });
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Image source={{ uri: image }} style={styles.thumbnailImage} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
           )}
         </View>
 
@@ -497,6 +531,31 @@ const styles = StyleSheet.create({
   indicatorActive: {
     backgroundColor: '#FFFFFF',
     width: 24,
+  },
+  thumbnailRow: {
+    position: 'absolute',
+    bottom: 70,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  thumbnailWrapper: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'transparent',
+    backgroundColor: '#FFFFFF',
+  },
+  thumbnailWrapperActive: {
+    borderColor: Colors.primary,
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
   },
   infoContainer: {
     padding: 20,
